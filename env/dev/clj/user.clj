@@ -60,4 +60,7 @@
   [name]
   (migrations/create name (select-keys env [:database-url])))
 
+;; Run at startup
+(mount/start)
+
 

@@ -13,7 +13,12 @@ profiles.clj
 .cpcache
 .nrepl-port
 /.shadow-cljs
-package.json
-shadow-cljs.edn
 /node_modules
 /log
+
+# Persists postgres dev server
+/pg_persist
+
+# Intellij/Cursive ignores
+/.idea
+/*.iml
