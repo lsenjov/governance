@@ -1,59 +1,60 @@
-{:paths ["src/clj" "src/cljs" "src/cljc" "resources" "target/cljsbuild"]
+{:paths   ["src/clj" "src/cljs" "src/cljc" "resources" "target/cljsbuild"]
  :aliases {:test {:extra-paths ["test/clj" "env/test/resources"]}
-           :dev {:extra-paths ["env/dev/clj"  "env/dev/cljs" "test/cljs" "env/dev/resources"]
-                 :extra-deps {binaryage/devtools {:mvn/version "1.0.2"}
-                              cider/piggieback {:mvn/version "0.5.1"}
-                              pjstadig/humane-test-output {:mvn/version "0.10.0"}
-                              prone/prone {:mvn/version "2020-01-17"}
-                              re-frisk/re-frisk {:mvn/version "1.3.4"}
-                              ring/ring-devel {:mvn/version "1.8.2"}
-                              ring/ring-mock {:mvn/version "0.4.0"}
-                              thheller/shadow-cljs {:mvn/version "2.9.8"}}
-                 :jvm-opts ["-Dconf=dev-config.edn"]}}
- :deps {buddy/buddy-auth {:mvn/version "2.2.0"}
-        buddy/buddy-core {:mvn/version "1.8.0"}
-        buddy/buddy-hashers {:mvn/version "1.6.0"}
-        buddy/buddy-sign {:mvn/version "3.2.0"}
-        ch.qos.logback/logback-classic {:mvn/version "1.2.3"}
-        cheshire/cheshire {:mvn/version "5.10.0"}
-        clj-oauth/clj-oauth {:mvn/version "1.5.5"}
-        cljs-ajax/cljs-ajax {:mvn/version "0.8.1"}
-        clojure.java-time/clojure.java-time {:mvn/version "0.3.2"}
-        com.cognitect/transit-clj {:mvn/version "1.0.324"}
-        com.fasterxml.jackson.core/jackson-core {:mvn/version "2.11.3"}
-        com.fasterxml.jackson.core/jackson-databind {:mvn/version "2.11.3"}
-        com.google.javascript/closure-compiler-unshaded {:mvn/version "v20200504" :scope "provided"}
-        conman/conman {:mvn/version "0.9.0"}
-        cprop/cprop {:mvn/version "0.1.17"}
-        day8.re-frame/http-fx {:mvn/version "0.2.1"}
-        expound/expound {:mvn/version "0.8.6"}
-        funcool/struct {:mvn/version "1.4.0"}
-        luminus-migrations/luminus-migrations {:mvn/version "0.6.9"}
-        luminus-transit/luminus-transit {:mvn/version "0.1.2"}
-        luminus-undertow/luminus-undertow {:mvn/version "0.1.7"}
-        luminus/ring-ttl-session {:mvn/version "0.3.3"}
-        markdown-clj/markdown-clj {:mvn/version "1.10.5"}
-        metosin/jsonista {:mvn/version "0.2.7"}
-        metosin/muuntaja {:mvn/version "0.6.7"}
-        metosin/reitit {:mvn/version "0.5.9"}
-        metosin/ring-http-response {:mvn/version "0.9.1"}
-        mount/mount {:mvn/version "0.1.16"}
-        nrepl/nrepl {:mvn/version "0.8.2"}
-        org.clojure/clojure {:mvn/version "1.10.1"}
-        org.clojure/clojurescript {:mvn/version "1.10.773" :scope "provided"}
-        org.clojure/core.async {:mvn/version "1.3.610"}
-        org.clojure/google-closure-library {:mvn/version "0.0-20191016-6ae1f72f" :scope "provided"}
-        org.clojure/tools.cli {:mvn/version "1.0.194"}
-        org.clojure/tools.logging {:mvn/version "1.1.0"}
-        org.postgresql/postgresql {:mvn/version "42.2.18"}
-        org.webjars.npm/bulma {:mvn/version "0.9.1"}
-        org.webjars.npm/material-icons {:mvn/version "0.3.1"}
-        org.webjars/webjars-locator {:mvn/version "0.40"}
-        org.webjars/webjars-locator-jboss-vfs {:mvn/version "0.1.0"}
-        re-frame/re-frame {:mvn/version "1.1.1"}
-        reagent/reagent {:mvn/version "0.10.0"}
-        ring-webjars/ring-webjars {:mvn/version "0.2.0"}
-        ring/ring-core {:mvn/version "1.8.2"}
-        ring/ring-defaults {:mvn/version "0.3.2"}
-        selmer/selmer {:mvn/version "1.12.31"}
-        thheller/shadow-cljs {:mvn/version "2.11.5" :scope "provided"}}}
+           :dev  {:extra-paths ["env/dev/clj" "env/dev/cljs" "test/cljs" "env/dev/resources"]
+                  :extra-deps  {binaryage/devtools          {:mvn/version "1.0.2"}
+                                cider/piggieback            {:mvn/version "0.5.1"}
+                                pjstadig/humane-test-output {:mvn/version "0.10.0"}
+                                prone/prone                 {:mvn/version "2020-01-17"}
+                                re-frisk/re-frisk           {:mvn/version "1.3.4"}
+                                ring/ring-devel             {:mvn/version "1.8.2"}
+                                ring/ring-mock              {:mvn/version "0.4.0"}
+                                thheller/shadow-cljs        {:mvn/version "2.9.8"}}
+                  :jvm-opts    ["-Dconf=dev-config.edn"]}}
+ :deps    {buddy/buddy-auth                                {:mvn/version "2.2.0"}
+           buddy/buddy-core                                {:mvn/version "1.8.0"}
+           buddy/buddy-hashers                             {:mvn/version "1.6.0"}
+           buddy/buddy-sign                                {:mvn/version "3.2.0"}
+           ch.qos.logback/logback-classic                  {:mvn/version "1.2.3"}
+           cheshire/cheshire                               {:mvn/version "5.10.0"}
+           cljs-ajax/cljs-ajax                             {:mvn/version "0.8.1"}
+           org.clojure/core.cache                          {:mvn/version "1.0.207"}
+           clojure.java-time/clojure.java-time             {:mvn/version "0.3.2"}
+           com.cognitect/transit-clj                       {:mvn/version "1.0.324"}
+           com.fasterxml.jackson.core/jackson-core         {:mvn/version "2.11.3"}
+           com.fasterxml.jackson.core/jackson-databind     {:mvn/version "2.11.3"}
+           com.google.javascript/closure-compiler-unshaded {:mvn/version "v20200504" :scope "provided"}
+           conman/conman                                   {:mvn/version "0.9.0"}
+           cprop/cprop                                     {:mvn/version "0.1.17"}
+           day8.re-frame/http-fx                           {:mvn/version "0.2.1"}
+           expound/expound                                 {:mvn/version "0.8.6"}
+           funcool/struct                                  {:mvn/version "1.4.0"}
+           luminus-migrations/luminus-migrations           {:mvn/version "0.6.9"}
+           luminus-transit/luminus-transit                 {:mvn/version "0.1.2"}
+           luminus-undertow/luminus-undertow               {:mvn/version "0.1.7"}
+           luminus/ring-ttl-session                        {:mvn/version "0.3.3"}
+           markdown-clj/markdown-clj                       {:mvn/version "1.10.5"}
+           metosin/jsonista                                {:mvn/version "0.2.7"}
+           metosin/muuntaja                                {:mvn/version "0.6.7"}
+           metosin/reitit                                  {:mvn/version "0.5.9"}
+           metosin/ring-http-response                      {:mvn/version "0.9.1"}
+           mount/mount                                     {:mvn/version "0.1.16"}
+           nrepl/nrepl                                     {:mvn/version "0.8.2"}
+           org.clojure/clojure                             {:mvn/version "1.10.1"}
+           org.clojure/clojurescript                       {:mvn/version "1.10.773" :scope "provided"}
+           org.clojure/core.async                          {:mvn/version "1.3.610"}
+           org.clojure/google-closure-library              {:mvn/version "0.0-20191016-6ae1f72f" :scope "provided"}
+           org.clojure/tools.cli                           {:mvn/version "1.0.194"}
+           org.clojure/tools.logging                       {:mvn/version "1.1.0"}
+           org.postgresql/postgresql                       {:mvn/version "42.2.18"}
+           org.webjars.npm/bulma                           {:mvn/version "0.9.1"}
+           org.webjars.npm/material-icons                  {:mvn/version "0.3.1"}
+           org.webjars/webjars-locator                     {:mvn/version "0.40"}
+           org.webjars/webjars-locator-jboss-vfs           {:mvn/version "0.1.0"}
+           re-frame/re-frame                               {:mvn/version "1.1.1"}
+           reagent/reagent                                 {:mvn/version "0.10.0"}
+           ring-oauth2/ring-oauth2                         {:mvn/version "0.1.5"}
+           ring-webjars/ring-webjars                       {:mvn/version "0.2.0"}
+           ring/ring-core                                  {:mvn/version "1.8.2"}
+           ring/ring-defaults                              {:mvn/version "0.3.2"}
+           selmer/selmer                                   {:mvn/version "1.12.31"}
+           thheller/shadow-cljs                            {:mvn/version "2.11.5" :scope "provided"}}}
