@@ -41,6 +41,7 @@
    {:hydration-keys '([_] [:user])}})
 
 (shared/create-model config)
+(Users :email "something@somewhere.com")
 (comment
   (-> '(shared/create-model config)
       macroexpand)

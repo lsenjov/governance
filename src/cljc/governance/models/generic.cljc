@@ -29,6 +29,8 @@
 (def created_at
   {:name ::created_at
    :spec ::timestamp
+   ;; Required is false, because properties are applied _after_ pre-insert
+   ;; So the checks don't find it. Not really a big deal though, since this is purely a system thing
    :required false})
 (def updated_at
   {:name ::updated_at

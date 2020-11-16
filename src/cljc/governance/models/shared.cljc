@@ -53,6 +53,8 @@
         {required-fields true optional-fields false} (group-by :required fields)
         required-keys (->> fields (filter (comp not false? :required)) (map :name))
         optional-keys (->> fields (filter (comp false? :required)) (map :name))
+
+        toucan-model (symbol (clojure.string/capitalize (name spec)))
         ]
     ;; Evaluate these separately, should return a nice list of things
 
@@ -64,7 +66,11 @@
                         ~@(when optional-keys [:opt-un optional-keys])))
          ;; Create the toucan object pointing to the db
          ~(concat
-            `(toucan.models/defmodel ~(symbol (clojure.string/capitalize (name spec)))
+            `(toucan.models/defmodel ~toucan-model
                                      ~spec
                                      toucan.models/IModel)
-            (default-toucan-opts toucan-opts spec)))))
+            (default-toucan-opts toucan-opts spec))
+         ;; Return a listing of the things we made
+         {:spec ~spec
+          :toucan-model ~toucan-model}
+         )))
