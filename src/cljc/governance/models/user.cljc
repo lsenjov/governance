@@ -9,7 +9,8 @@
 
 (def config
   ;; The name of the spec, and also the name of the table we're pulling from
-  {:spec ::users
+  {:spec
+   ::users
    ;; Each of our fields on this table
    :fields
    ;; Using symbols to call in predefined fields
@@ -33,23 +34,21 @@
      :required false}
     {:name ::is_active
      :spec boolean?}]
+
    ;; Pass these directly to toucan, overriding any defaults presented in g.models.shared
-   ;:toucan/opts
-   ;'[(properties [_] {:timestamped? true})
-   ;  (pre-insert
-   ;    [record]
-   ;    (update record :id #(or % (str (java.util.UUID/randomUUID)))))]
-   })
+   ;; These go into the record declaration
+   :toucan/opts
+   {:hydration-keys '([_] [:user])}})
 
 (shared/create-model config)
 (comment
   (-> '(shared/create-model config)
-     macroexpand)
+      macroexpand)
 
   (Users)
   (toucan.db/insert! Users {})
   (toucan.db/insert! Users
-                     {:email "something@somewhere.com"
+                     {:email     "something@somewhere.com"
                       :is_active true})
 
- (gen/sample (s/gen ::users)))
+  (gen/sample (s/gen ::users)))

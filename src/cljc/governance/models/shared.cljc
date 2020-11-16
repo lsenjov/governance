@@ -11,31 +11,37 @@
 (macroexpand-1 '(create-field {:name ::test :spec boolean?}))
 (create-field {:name ::test :spec boolean?})
 
-(defmacro toucan-opts
+(defn default-toucan-opts
   ;; Takes a map of key->fn-tail, puts in any missing defaults, converts the whole thing to opts
   [ks spec]
-  (->> {:properties
-        '([_] {:timestamped? true})
+  (->>
+    ;; Here's our defaults map
+    ;; By default, all objects are timestamped
+    {:properties
+     '([_] {:timestamped? true})
 
-        ;; Manually drill down into here, because we need to leave spec unquoted
-        :pre-insert
-        (list
-          ['record]
-          ;; Add any modifications first
-          (list 'let '[record-updated
-                       (update record :id #(or % (str (java.util.UUID/randomUUID))))]
-                ;; Check our record against the spec
-                (list 'assert
-                      (list 's/valid? spec 'record-updated)
-                      ;; Error message will be why the spec failed
-                      (list 's/explain spec 'record-updated))
-                ;; Return the updated object
-                'record-updated))}
-       ;; Overwrite the above defaults
-       (merge ks)
-       (map (fn [[k v]] (concat [(symbol k)] v)))
-       )
-  )
+     ;; Manually drill down into here, because we need to leave spec unquoted
+     :pre-insert
+     (list
+       ['record]
+       ;; Add any modifications first, in this case add ID
+       (list 'let '[record-updated
+                    (update record :id #(or % (str (java.util.UUID/randomUUID))))]
+             ;; Check our record against the spec
+             (list 'assert
+                   (list 's/valid? spec 'record-updated)
+                   ;; Error message will be why the spec failed
+                   (list 's/explain spec 'record-updated))
+             ;; Return the updated object
+             'record-updated))}
+    ;; Overwrite the above defaults
+    (merge ks)
+    ;; Put the symbol name back in the record
+    (map (fn [[k v]] (concat [(symbol k)] v)))
+    ))
+(comment
+  (macroexpand-1 '(default-toucan-opts nil ::users))
+  (default-toucan-opts {} ::users))
 
 (defmacro create-model
   [ks]
@@ -61,18 +67,4 @@
             `(toucan.models/defmodel ~(symbol (clojure.string/capitalize (name spec)))
                                      ~spec
                                      toucan.models/IModel)
-            (or toucan-opts
-                ['(properties [_] {:timestamped? true})
-                 ;; Manually drill down into here, because we need to leave spec unquoted
-                 (list 'pre-insert
-                       ['record]
-                       ;; Add any modifications first
-                       (list 'let '[record-updated
-                                    (update record :id #(or % (str (java.util.UUID/randomUUID))))]
-                             ;; Check our record against the spec
-                             (list 'assert
-                                   (list 's/valid? spec 'record-updated)
-                                   ;; Error message will be why the spec failed
-                                   (list 's/explain spec 'record-updated))
-                             ;; Return the updated object
-                             'record-updated))])))))
+            (default-toucan-opts toucan-opts spec)))))
