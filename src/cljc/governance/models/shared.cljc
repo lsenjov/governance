@@ -55,6 +55,8 @@
         optional-keys (->> fields (filter (comp false? :required)) (map :name))
 
         toucan-model (symbol (clojure.string/capitalize (name spec)))
+
+        query-spec-kw (keyword (namespace spec) "query")
         ]
     ;; Evaluate these separately, should return a nice list of things
 
@@ -64,6 +66,11 @@
          (s/def ~spec (s/keys
                         ~@(when required-keys [:req-un required-keys])
                         ~@(when optional-keys [:opt-un optional-keys])))
+         ;; Do a spec where everything is optional - useful for queries
+         (s/def ~query-spec-kw (s/keys :opt-un ~(concat required-keys optional-keys)))
+         ;; Do a spec where an array of results is nestled under :value
+         (s/def ~(keyword (namespace spec) "value") (s/coll-of ~spec))
+         (s/def ~(keyword (namespace spec) "get-response") (s/keys :req-un [~(keyword (namespace spec) "value")]))
          ;; Create the toucan object pointing to the db
          ~(concat
             `(toucan.models/defmodel ~toucan-model
@@ -72,5 +79,7 @@
             (default-toucan-opts toucan-opts spec))
          ;; Return a listing of the things we made
          {:spec ~spec
+          :query-spec ~query-spec-kw
+          :response-spec ~(keyword (namespace spec) "get-response")
           :toucan-model ~toucan-model}
          )))

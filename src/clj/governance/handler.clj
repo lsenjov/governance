@@ -2,6 +2,7 @@
   (:require
     [governance.middleware :as middleware]
     [governance.layout :refer [error-page]]
+    [governance.routes.crud :refer [crud-routes]]
     [governance.routes.home :refer [home-routes]]
     [governance.routes.services :refer [service-routes]]
     [reitit.swagger-ui :as swagger-ui]
@@ -9,7 +10,8 @@
     [ring.middleware.content-type :refer [wrap-content-type]]
     [ring.middleware.webjars :refer [wrap-webjars]]
     [governance.env :refer [defaults]]
-    [mount.core :as mount]))
+    [mount.core :as mount]
+    [reitit.coercion :as coercion]))
 
 (mount/defstate init-app
   :start ((or (:init defaults) (fn [])))
@@ -20,7 +22,8 @@
   (ring/ring-handler
     (ring/router
       [(home-routes)
-       (service-routes)])
+       (service-routes)
+       (crud-routes)])
     (ring/routes
       (swagger-ui/create-swagger-ui-handler
         {:path   "/swagger-ui"

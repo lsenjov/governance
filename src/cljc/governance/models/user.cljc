@@ -40,13 +40,14 @@
    :toucan/opts
    {:hydration-keys '([_] [:user])}})
 
-(shared/create-model config)
+(def model (shared/create-model config))
 (Users :email "something@somewhere.com")
 (comment
   (-> '(shared/create-model config)
       macroexpand)
 
   (Users)
+  (Users :email "something@somewhere.com")
   (toucan.db/insert! Users {})
   (toucan.db/insert! Users
                      {:email     "something@somewhere.com"
