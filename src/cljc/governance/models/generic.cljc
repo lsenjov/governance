@@ -28,7 +28,9 @@
    :required true})
 (def created_at
   {:name ::created_at
-   :spec ::timestamp})
+   :spec ::timestamp
+   :required false})
 (def updated_at
   {:name ::updated_at
-   :spec ::timestamp})
+   :spec ::timestamp
+   :required false})

@@ -12,9 +12,6 @@
    :subname     "//localhost:5432/governance_dev"
    :user        "postgres"
    :password "Pass2020!"})
-(add-type! :integer
-           :in str
-           :out #(Integer/parseInt %))
 (add-property! :timestamped?
                :insert (fn [obj _]
                          (let [now (java.sql.Timestamp. (System/currentTimeMillis))]
