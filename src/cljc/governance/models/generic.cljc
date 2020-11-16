@@ -18,3 +18,17 @@
                (gen/large-integer))))
 (s/def ::created_at ::timestamp)
 (s/def ::updated_at ::timestamp)
+
+(def id
+  ;; Name we're using for the spec - must be qualified
+  {:name ::id
+   ;; Actual spec. Can always throw in a with-gen here or whatever
+   :spec ::string-non-empty
+   ;; Optional field, assumes true
+   :required true})
+(def created_at
+  {:name ::created_at
+   :spec ::timestamp})
+(def updated_at
+  {:name ::updated_at
+   :spec ::timestamp})
