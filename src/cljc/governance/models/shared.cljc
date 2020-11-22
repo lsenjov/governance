@@ -37,13 +37,14 @@
     ;; Overwrite the above defaults
     (merge ks)
     ;; Put the symbol name back in the record
-    (map (fn [[k v]] (concat [(symbol k)] v)))
-    ))
+    (map (fn [[k v]] (concat [(symbol k)] v)))))
 (comment
   (macroexpand-1 '(default-toucan-opts nil ::users))
   (default-toucan-opts {} ::users))
 
 (defmacro create-model
+  "Create all the things we need for crud.
+  This defines a `model` in the calling namespace"
   [ks]
   (let [{:keys       [fields spec]
          toucan-opts :toucan/opts
@@ -55,13 +56,13 @@
         optional-keys (->> fields (filter (comp false? :required)) (map :name))
 
         toucan-model (symbol (clojure.string/capitalize (name spec)))
+        model-sym 'model
 
-        query-spec-kw (keyword (namespace spec) "query")
-        ]
+        query-spec-kw (keyword (namespace spec) "query")]
     ;; Evaluate these separately, should return a nice list of things
 
     ;; Set up specs for each of the individual fields
-    `(do ~(mapv #(list `create-field %) fields)
+    `(do ~@(mapv #(list `create-field %) fields)
          ;; Now a spec for the object itself
          (s/def ~spec (s/keys
                         ~@(when required-keys [:req-un required-keys])
@@ -78,8 +79,9 @@
                                      toucan.models/IModel)
             (default-toucan-opts toucan-opts spec))
          ;; Return a listing of the things we made
-         {:spec ~spec
-          :query-spec ~query-spec-kw
-          :response-spec ~(keyword (namespace spec) "get-response")
-          :toucan-model ~toucan-model}
-         )))
+
+         (def ~model-sym
+           {:spec          ~spec
+           :query-spec    ~query-spec-kw
+           :response-spec ~(keyword (namespace spec) "get-response")
+           :toucan-model ~toucan-model}))))

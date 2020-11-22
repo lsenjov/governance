@@ -40,8 +40,11 @@
    :toucan/opts
    {:hydration-keys '([_] [:user])}})
 
-(def model (shared/create-model config))
-(Users :email "something@somewhere.com")
+(clojure.pprint/pprint (-> '(shared/create-model config)
+                           macroexpand))
+
+(shared/create-model config)
+;(Users :email "something@somewhere.com")
 (comment
   (-> '(shared/create-model config)
       macroexpand)
