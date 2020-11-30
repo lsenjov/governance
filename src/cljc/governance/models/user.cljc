@@ -1,11 +1,10 @@
 (ns governance.models.user
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [governance.db.toucan :as toucan]
-            [toucan.models]
-            [toucan.db]
             [governance.models.generic :as generic]
-            [governance.models.shared :as shared]))
+            [governance.models.shared :as shared
+             #?@(:clj [:refer [create-model-clj]]
+                 :cljs [:refer-macros [create-model-cljs]])]))
 
 (def config
   ;; The name of the spec, and also the name of the table we're pulling from
@@ -30,7 +29,7 @@
      :spec     '(s/nilable ::generic/timestamp)
      :required false}
     {:name ::is_active
-     :spec boolean?}]
+     :spec 'boolean?}]
 
    :properties
    {:timestamped? true
@@ -42,14 +41,19 @@
    :toucan/opts
    {:hydration-keys '([_] [:users])}})
 
-(shared/create-model config)
+;; I'd like to simplify this more, but this may be the limit on what I can do with it for now
+;; Mainly because in macros, they're being done at compilation _inside clj_, so reader macros always see clj
+;; I think. Probably needs more testing
+#?(:clj (create-model-clj config)
+   :cljs (create-model-cljs config))
 ;(Users :email "something@somewhere.com")
 (comment
-  (clojure.pprint/pprint (-> '(shared/create-model config)
+  (clojure.pprint/pprint (-> '(shared/create-model-clj config)
                              macroexpand))
   (-> '(shared/create-model config)
       macroexpand-1)
   (shared/apply-properties config)
+  (create-model-cljs config)
 
   (Users)
   (Users :email "something@somewhere.com")

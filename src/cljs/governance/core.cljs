@@ -11,6 +11,7 @@
     [governance.events]
     [reitit.core :as reitit]
     [reitit.frontend.easy :as rfe]
+    [governance.models]
     [clojure.string :as string])
   (:import goog.History))
 

@@ -57,5 +57,6 @@
            ring/ring-core                                  {:mvn/version "1.8.2"}
            ring/ring-defaults                              {:mvn/version "0.3.2"}
            selmer/selmer                                   {:mvn/version "1.12.31"}
+           com.taoensso/timbre                             {:mvn/version "5.1.0"}
            thheller/shadow-cljs                            {:mvn/version "2.11.5" :scope "provided"}
            toucan/toucan                                   {:mvn/version "1.15.1"}}}
