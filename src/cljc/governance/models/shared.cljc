@@ -45,7 +45,7 @@
 (defn apply-properties
   [{properties :properties
     :as        ks}]
-  (println "apply-properties")
+  (log/trace "apply-properties")
   ;; Take the properties
   ((->> properties
         ;; Get the associated function from model-properties

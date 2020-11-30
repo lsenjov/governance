@@ -35,20 +35,18 @@
    :properties
    {:timestamped? true
     :id true
-    :validate ::users
-    }
+    :validate ::users}
 
    ;; Pass these directly to toucan, overriding any defaults presented in g.models.shared
    ;; These go into the record declaration
    :toucan/opts
    {:hydration-keys '([_] [:users])}})
 
-(clojure.pprint/pprint (-> '(shared/create-model config)
-                           macroexpand))
-
 (shared/create-model config)
 ;(Users :email "something@somewhere.com")
 (comment
+  (clojure.pprint/pprint (-> '(shared/create-model config)
+                             macroexpand))
   (-> '(shared/create-model config)
       macroexpand-1)
   (shared/apply-properties config)
@@ -59,5 +57,10 @@
   (toucan.db/insert! Users
                      {:email     "something@somewhere.com"
                       :is_active true})
+  (toucan.db/update! Users "9809ccf6-14cf-461f-aab5-854ea1fd2e82"
+                     {:email     "something@somewhere.com"
+                                   :is_active false})
+  ;; Deletes _all_ the things
+  (toucan.db/delete! Users)
 
   (gen/sample (s/gen ::users)))
