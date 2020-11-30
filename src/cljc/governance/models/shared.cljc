@@ -51,7 +51,6 @@
          :as         ks'}
         (eval ks)
 
-        {required-fields true optional-fields false} (group-by :required fields)
         required-keys (->> fields (filter (comp not false? :required)) (map :name))
         optional-keys (->> fields (filter (comp false? :required)) (map :name))
 
