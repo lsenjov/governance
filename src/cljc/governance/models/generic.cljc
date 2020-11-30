@@ -11,7 +11,7 @@
 (s/def ::timestamp
   (s/with-gen
     #(= (class %)
-       java.sql.Timestamp)
+        java.sql.Timestamp)
     #(gen/fmap (fn [l] (java.sql.Timestamp.
                          ;; This does times _around about_ 2017
                          (+ l 1500000000000)))
@@ -21,18 +21,29 @@
 
 (def id
   ;; Name we're using for the spec - must be qualified
-  {:name ::id
+  {:name     ::id
    ;; Actual spec. Can always throw in a with-gen here or whatever
-   :spec ::string-non-empty
+   :spec     ::string-non-empty
    ;; Optional field, assumes true
-   :required true})
+   ;; For properties, we generally set this to false
+   ;; Just because it's really hard to validate properties in the right order
+   :required false})
 (def created_at
-  {:name ::created_at
-   :spec ::timestamp
+  {:name     ::created_at
+   :spec     ::timestamp
    ;; Required is false, because properties are applied _after_ pre-insert
    ;; So the checks don't find it. Not really a big deal though, since this is purely a system thing
    :required false})
 (def updated_at
-  {:name ::updated_at
-   :spec ::timestamp
+  {:name     ::updated_at
+   :spec     ::timestamp
    :required false})
+
+(defmacro foreign-ref
+  "For creating a foreign reference to another table"
+  [field-name opts]
+  `(merge
+     {:name     (keyword (str *ns*) ~field-name)
+      :spec     ::string-non-empty
+      :required false}
+    ~opts))

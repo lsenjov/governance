@@ -1,6 +1,8 @@
 (ns governance.models.shared
   (:require [clojure.spec.alpha :as s]
+            [clojure.tools.logging :as log]
             [governance.db.toucan :as toucan]
+            [governance.models.generic :as generic]
             [toucan.models]
             [toucan.db]))
 
@@ -13,34 +15,49 @@
 
 (defn default-toucan-opts
   ;; Takes a map of key->fn-tail, puts in any missing defaults, converts the whole thing to opts
-  [ks spec]
+  [{toucan-opts :toucan/opts
+    properties  :properties
+    :as         ks} spec]
   (->>
     ;; Here's our defaults map
     ;; By default, all objects are timestamped
     {:properties
-     '([_] {:timestamped? true})
-
-     ;; Manually drill down into here, because we need to leave spec unquoted
-     :pre-insert
-     (list
-       ['record]
-       ;; Add any modifications first, in this case add ID
-       (list 'let '[record-updated
-                    (update record :id #(or % (str (java.util.UUID/randomUUID))))]
-             ;; Check our record against the spec
-             (list 'assert
-                   (list 's/valid? spec 'record-updated)
-                   ;; Error message will be why the spec failed
-                   (list 's/explain spec 'record-updated))
-             ;; Return the updated object
-             'record-updated))}
+     (list '[_] properties)}
     ;; Overwrite the above defaults
-    (merge ks)
+    (merge toucan-opts)
     ;; Put the symbol name back in the record
     (map (fn [[k v]] (concat [(symbol k)] v)))))
 (comment
   (macroexpand-1 '(default-toucan-opts nil ::users))
   (default-toucan-opts {} ::users))
+
+(def model-properties
+  "Each property is a function: taking a model and argument and transforming it"
+  {:id
+   (fn [model _]
+     (log/trace "property: id")
+     (update model :fields
+             concat [generic/id]))
+   :timestamped?
+   (fn [model _]
+     (log/trace "property: timestamped")
+     (update-in model [:fields] concat [generic/updated_at generic/created_at]))})
+(defn apply-properties
+  [{properties :properties
+    :as        ks}]
+  (println "apply-properties")
+  ;; Take the properties
+  ((->> properties
+        ;; Get the associated function from model-properties
+        (map (fn [[k v]] [(get model-properties k) v]))
+        ;; Cull any without one
+        (filter first)
+        ;; Create a function for each
+        (map (fn [[k-fn v]] (fn [obj] (k-fn obj v))))
+        ;; Compose them
+        (apply comp))
+   ;; Apply it to ks
+   ks))
 
 (defmacro create-model
   "Create all the things we need for crud.
@@ -49,7 +66,7 @@
   (let [{:keys       [fields spec]
          toucan-opts :toucan/opts
          :as         ks'}
-        (eval ks)
+        (apply-properties (eval ks))
 
         required-keys (->> fields (filter (comp not false? :required)) (map :name))
         optional-keys (->> fields (filter (comp false? :required)) (map :name))
@@ -76,11 +93,11 @@
             `(toucan.models/defmodel ~toucan-model
                                      ~spec
                                      toucan.models/IModel)
-            (default-toucan-opts toucan-opts spec))
+            (default-toucan-opts ks' spec))
          ;; Return a listing of the things we made
 
          (def ~model-sym
            {:spec          ~spec
-           :query-spec    ~query-spec-kw
-           :response-spec ~(keyword (namespace spec) "get-response")
-           :toucan-model ~toucan-model}))))
+            :query-spec    ~query-spec-kw
+            :response-spec ~(keyword (namespace spec) "get-response")
+            :toucan-model  ~toucan-model}))))

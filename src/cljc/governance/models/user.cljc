@@ -14,10 +14,7 @@
    ;; Each of our fields on this table
    :fields
    ;; Using symbols to call in predefined fields
-   [generic/id
-    generic/created_at
-    generic/updated_at
-    {:name     ::first_name
+   [{:name     ::first_name
      ;; Note these need to be quoted if you're doing any functions/macros on them
      :spec     '(s/nilable ::generic/string-non-empty)
      :required false}
@@ -35,10 +32,16 @@
     {:name ::is_active
      :spec boolean?}]
 
+   :properties
+   {:timestamped? true
+    :id true
+    :validate ::users
+    }
+
    ;; Pass these directly to toucan, overriding any defaults presented in g.models.shared
    ;; These go into the record declaration
    :toucan/opts
-   {:hydration-keys '([_] [:user])}})
+   {:hydration-keys '([_] [:users])}})
 
 (clojure.pprint/pprint (-> '(shared/create-model config)
                            macroexpand))
@@ -47,7 +50,8 @@
 ;(Users :email "something@somewhere.com")
 (comment
   (-> '(shared/create-model config)
-      macroexpand)
+      macroexpand-1)
+  (shared/apply-properties config)
 
   (Users)
   (Users :email "something@somewhere.com")
