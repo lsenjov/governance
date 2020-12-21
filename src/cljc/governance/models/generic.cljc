@@ -1,17 +1,20 @@
 (ns governance.models.generic
   (:require [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]))
+            [clojure.spec.gen.alpha :as gen])
+  #?(:clj (:import (java.util UUID))))
 
 (s/def ::string-non-empty
   (s/and string?
          #(pos? (count %))))
-(s/def ::id ::string-non-empty)
+(s/def ::id
+  #?(:clj (s/with-gen #(instance? UUID %)
+                      #(gen/uuid))
+     :cljs ::string-non-empty))
 
 (s/def ::timestamp
   #?(:clj
      (s/with-gen
-       #(= (class %)
-           java.sql.Timestamp)
+       #(instance? java.sql.Timestamp %)
        #(gen/fmap (fn [l] (java.sql.Timestamp.
                             ;; This does times _around about_ 2017
                             (+ l 1500000000000)))
@@ -28,7 +31,7 @@
   ;; Name we're using for the spec - must be qualified
   {:name     ::id
    ;; Actual spec. Can always throw in a with-gen here or whatever
-   :spec     ::string-non-empty
+   :spec     ::id
    ;; Optional field, assumes true
    ;; For properties, we generally set this to false
    ;; Just because it's really hard to validate properties in the right order
@@ -49,6 +52,6 @@
   [field-name opts]
   `(merge
      {:name     (keyword (str *ns*) ~field-name)
-      :spec     ::string-non-empty
+      :spec     ::id
       :required false}
     ~opts))
