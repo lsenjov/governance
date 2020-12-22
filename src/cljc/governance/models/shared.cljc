@@ -2,11 +2,10 @@
   #?(:cljs (:require-macros [governance.models.shared :refer [create-field create-model-cljs]]))
   (:require [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]
+            [honeysql.core :as sql]
+            [honeysql.helpers :as sqlh]
             [governance.models.generic :as generic]
-            #?@(:clj
-                [[toucan.models]
-                 [toucan.db]
-                 [governance.db.toucan :as toucan]])))
+            [governance.models.shared.query]))
 
 (defmacro create-field
   [field]
@@ -15,24 +14,6 @@
 (comment
   (macroexpand-1 '(create-field {:name ::test :spec boolean?}))
   (create-field {:name ::test :spec boolean?}))
-
-(defn default-toucan-opts
-  ;; Takes a map of key->fn-tail, puts in any missing defaults, converts the whole thing to opts
-  [{toucan-opts :toucan/opts
-    properties  :properties
-    :as         ks} spec]
-  (->>
-    ;; Here's our defaults map
-    ;; By default, all objects are timestamped
-    {:properties
-     (list '[_] properties)}
-    ;; Overwrite the above defaults
-    (merge toucan-opts)
-    ;; Put the symbol name back in the record
-    (map (fn [[k v]] (concat [(symbol k)] v)))))
-(comment
-  (macroexpand-1 '(default-toucan-opts nil ::users))
-  (default-toucan-opts {} ::users))
 
 (def model-properties
   "Each property is a function: taking a model and argument and transforming it"
@@ -44,7 +25,7 @@
    :timestamped?
    (fn [model _]
      (log/trace "property: timestamped")
-     (update-in model [:fields] concat [generic/updated_at generic/created_at]))})
+     (update model :fields concat [generic/updated_at generic/created_at]))})
 (defn apply-properties
   [{properties :properties
     :as        ks}]
@@ -89,40 +70,34 @@
   [ks]
   `(merge
      (create-specs ~ks)))
+(comment
+  (sql/format
+    {:select [:*]
+     :from   [:crises]})
+  (-> (sqlh/select :*)
+      (sqlh/from :crises)
+      (sqlh/select :crises/id)
+      (sql/format)))
 (defmacro create-model-clj
-  "Create all the things we need for crud.
-  This defines a `model` in the calling namespace"
   [ks]
-  (let [{:keys       [fields spec]
-         toucan-opts :toucan/opts
-         :as         ks'}
-        (apply-properties (eval ks))
-        toucan-model (symbol (clojure.string/capitalize (name spec)))
-        model-sym 'model]
-    ;; Evaluate these separately, should return a nice list of things
-
-    ;; Create the toucan object pointing to the db
-    `(do
-       ~(concat
-          `(toucan.models/defmodel ~toucan-model
-                                   ~spec
-                                   toucan.models/IModel)
-          (default-toucan-opts ks' spec))
-       ;; Return a listing of the things we made
-
-       (def ~model-sym
-         (merge (create-shared ~ks')
-                {:toucan-model ~toucan-model})))))
+  (let [ks' (-> ks
+                eval
+                apply-properties)]
+    `(merge (create-shared ~ks')
+            {:crud (governance.models.shared.query/build-queries-map '~ks')})))
 (defmacro create-model-cljs
   [ks]
-  (let [ks' (apply-properties (eval ks))
-        model-sym 'model]
-    `(def ~model-sym
-       (merge (create-shared ~ks')))))
+  (let [ks' (apply-properties (eval ks))]
+    `(merge (create-shared ~ks'))))
 
 (comment
-  (macroexpand '(create-model-cljs {:spec ::something}))
-  (macroexpand '(create-model-cljs {:spec ::something
-                                    :properties {:id true
+  (macroexpand '(create-model-clj {:spec ::something}))
+  (macroexpand '(governance.models.shared/create-shared {:spec :governance.models.shared/something}))
+  (create-model-clj {:spec ::something})
+  (-> '(create-model-cljs {:spec ::something})
+      macroexpand
+      macroexpand)
+  (macroexpand '(create-model-cljs {:spec       ::something
+                                    :properties {:id           true
                                                  :timestamped? true
-                                                 :validated ::something}})))
+                                                 :validated    ::something}})))

@@ -3,7 +3,7 @@
             [reitit.ring.coercion :as coercion]
             [governance.models :refer [models]]
             [governance.middleware :as middleware]
-            [toucan.db :as db]
+            [honeysql.helpers :as sqlh]
             [clojure.spec.alpha :as s]
             [spec-tools.core :as st]))
 
@@ -32,29 +32,37 @@
                              ;; TODO move this out
                              :handler    (fn [request]
                                            (reset! *_t request)
-                                           {:status 200
-                                            :body   (apply
-                                                      db/select
-                                                      (:toucan-model model)
-                                                      (-> request :params vec flatten))})}
+                                           {:status   200
+                                            :body     ((-> model :crud :select)
+                                                       (cond->
+                                                         {:select [:*]
+                                                          :from   (symbol (name spec))}
+
+                                                         ;; Got parameters? We only check for equality atm
+                                                         (-> request :params count pos?)
+                                                         (sqlh/where
+                                                           [:and (map (fn [[k v]] [:= k v])
+                                                                      (:params request))])))})}
                     :post   {:summary    (format "Create a %s" route-name)
                              :responses  {200 {:body spec}}
                              :parameters {:body spec}
                              :handler    (fn [request]
                                            (reset! *_t request)
                                            {:status 200
-                                            :body   (db/insert!
-                                                      (:toucan-model model)
-                                                      (:params request))})}
+                                            :body   (
+                                                     (constantly nil)
+                                                     (:toucan-model model)
+                                                     (:params request))})}
                     :put    {:summary    (format "Update one of %s" route-name)
                              :responses  {:200 {:body spec}}
                              :parameters {:body spec}
                              :handler    (fn [request]
                                            {:status 200
-                                            :body   {:success (db/update!
-                                                                (:toucan-model model)
-                                                                (:id model)
-                                                                (:params request))}})}
+                                            :body   {:success (
+                                                               (constantly nil)
+                                                               (:toucan-model model)
+                                                               (:id model)
+                                                               (:params request))}})}
                     :delete {:summary    (format "Delete one of %s" route-name)
                              :responses  {:200 {}}
                              :parameters {}
@@ -62,6 +70,7 @@
                                            ;; For gods sake, don't let us delete _everything_ in the database in one go
                                            (assert (pos? (count (:params request))))
                                            {:status 200
-                                            :body   (db/delete!
-                                                      (:toucan-model model)
-                                                      (-> request :params vec flatten))})}}]))))))
+                                            :body   (
+                                                     (constantly nil)
+                                                     (:toucan-model model)
+                                                     (-> request :params vec flatten))})}}]))))))

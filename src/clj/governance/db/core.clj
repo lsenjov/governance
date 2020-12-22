@@ -1,6 +1,7 @@
 (ns governance.db.core
   (:require
     [cheshire.core :refer [generate-string parse-string]]
+    [clojure.java.jdbc :as jdbc]
     [next.jdbc.date-time]
     [next.jdbc.prepare]
     [next.jdbc.result-set]
