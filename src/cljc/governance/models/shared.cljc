@@ -68,11 +68,12 @@
 
 (defn create-model
   [ks]
-  (merge
-    ks
-    (create-schemas ks)
-    (governance.models.shared.query/build-queries-map ks))
-  )
+  (let [ks' (-> ks
+                apply-properties)]
+    (merge
+      ks'
+      (create-schemas ks')
+      {:crud (governance.models.shared.query/build-queries-map ks')})))
 
 (comment
   (macroexpand '(create-model-clj {:spec ::something}))

@@ -1,6 +1,7 @@
 (ns governance.models
   (:require
     [clojure.spec.alpha :as s]
+    [governance.config :refer [env]]
     [governance.models.crisis]
     [governance.models.tag]
     [governance.models.user]
@@ -13,12 +14,18 @@
    governance.models.tag/config
    governance.models.user/config])
 (defn construct-models
-  [models]
-  (->> models
+  [configs]
+  (->> configs
        (map (fn [model] {(:spec model) (shared/create-model model)}))
        (apply merge)))
-(def models
+(defn models-inner []
   (construct-models configs))
+
+(def models
+  ;; In a dev environment, don't memoize this
+  (if (:dev env)
+    models-inner
+    (memoize models-inner)))
 
 (comment
   (shared/create-model governance.models.user/config)

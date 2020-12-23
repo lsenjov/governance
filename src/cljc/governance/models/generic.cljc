@@ -39,8 +39,7 @@
   ;; Name we're using for the spec - must be qualified
   {:name     ::id
    ;; Actual spec. Can always throw in a with-gen here or whatever
-   :spec     #?(:clj  #(instance? UUID %)
-                :cljs ::string-non-empty)
+   :spec     sc/Uuid
    ;; Optional field, assumes true
    ;; For properties, we generally set this to false
    ;; Just because it's really hard to validate properties in the right order

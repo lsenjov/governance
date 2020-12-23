@@ -4,6 +4,8 @@
             [honeysql.core :as sql]
             [honeysql.helpers :as sqlh]
             [governance.db.core :refer [*db*]]
+            [governance.models.shared.schemas :refer [get-schema]]
+            [schema.core :as sc]
             [clojure.spec.alpha :as s])
   (:import (java.util UUID)
            (java.sql Timestamp))
@@ -69,13 +71,13 @@
       (update :insert
               (fn [handler]
                 (fn [query]
-                  (mapv (fn [obj] (assert (s/valid? spec obj) (s/explain spec obj)))
+                  (mapv (fn [obj] (sc/validate (get-schema spec) obj))
                         (:values query))
                   (handler query))))
       (update :update
               (fn [handler]
                 (fn [query]
-                  (mapv (fn [obj] (assert (s/valid? spec obj) (s/explain spec obj)))
+                  (mapv (fn [obj] (sc/validate (get-schema spec) obj))
                         (:values query))
                   (handler query))))))
 

@@ -20,62 +20,64 @@
                    coercion/coerce-response-middleware
                    coercion/coerce-request-middleware]
       :swagger    {:info {:title "Crud API"}}}]
-    (->> models
+    (->> (models)
          vals
-         (map (fn [{spec :spec
+         (map (fn [{spec   :spec
                     schema :schema
-                    :as  model}]
+                    :as    model}]
                 (let [route-name (name spec)]
                   [(str "/" route-name)
-                   {:name   spec
+                   {:name    spec
                     :swagger {:tags [(name spec)]}
-                    :get    {:summary    (format "GET one or more %s" route-name)
-                             :responses  {200 {:body [schema]}}
-                             :parameters {:params (sc/maybe (:query model))
-                                          :query  (sc/maybe (:query model))}
-                             ;; TODO move this out
-                             :handler    (fn [request]
-                                           (reset! *_t request)
-                                           (reset! *_m model)
-                                           {:status 200
-                                            :body   ((-> model :crud :select)
-                                                     (cond->
-                                                       {:select [:*]
-                                                        :from   [(symbol (name spec))]}
+                    :get     {:summary    (format "GET one or more %s" route-name)
+                              :responses  {200 {:body [schema]}}
+                              :parameters {:params (sc/maybe (:query model))
+                                           :query  (sc/maybe (:query model))}
+                              ;; TODO move this out
+                              :handler    (fn [request]
+                                            (reset! *_t request)
+                                            (reset! *_m model)
+                                            {:status 200
+                                             :body   ((-> model :crud :select)
+                                                      (cond->
+                                                        {:select [:*]
+                                                         :from   [(symbol (name spec))]}
 
-                                                       ;; Got parameters? We only check for equality atm
-                                                       (-> request :params count pos?)
-                                                       (sqlh/where
-                                                         [:and (map (fn [[k v]] [:= k v])
-                                                                    (:params request))])))})}
-                    :post   {:summary    (format "Create a %s" route-name)
-                             :responses  {200 {:body (:collection model)}}
-                             :parameters {:body (:collection model)}
-                             :handler    (fn [request]
-                                           (reset! *_t request)
-                                           (reset! *_m model)
-                                           {:status 200
-                                            :body   ((-> model :crud :insert)
-                                                     {:values (:body-params request)})})}
-                    :put    {:summary    (format "Update one of %s" route-name)
-                             :responses  {:200 {:body schema}}
-                             :parameters {:body schema}
-                             :handler    (fn [request]
-                                           {:status 200
-                                            :body   {:success (
-                                                               (constantly nil)
-                                                               (:toucan-model model)
-                                                               (:id model)
-                                                               (:params request))}})}
-                    :delete {:summary    (format "Delete one of %s" route-name)
-                             :responses  {:200 {}}
-                             :parameters {}
-                             :handler    (fn [request]
-                                           ;; For gods sake, don't let us delete _everything_ in the database in one go
-                                           (assert (pos? (count (:params request))))
-                                           {:status 200
-                                            :body   (
-                                                     (constantly nil)
-                                                     (:toucan-model model)
-                                                     (-> request :params vec flatten))})}}
-                    ]))))))
+                                                        ;; Got parameters? We only check for equality atm
+                                                        (-> request :params count pos?)
+                                                        (sqlh/where
+                                                          (concat
+                                                            [:and]
+                                                            (map (fn [[k v]] [:= k v])
+                                                                 (:params request))))))})}
+                    :post    {:summary    (format "Create a %s" route-name)
+                              :responses  {200 {:body (:collection model)}}
+                              :parameters {:body (:collection model)}
+                              :handler    (fn [request]
+                                            (reset! *_t request)
+                                            (reset! *_m model)
+                                            {:status 200
+                                             :body   ((-> model :crud :insert)
+                                                      {:values (:body-params request)})})}
+                    :put     {:summary    (format "Update one of %s" route-name)
+                              :responses  {:200 {:body schema}}
+                              :parameters {:body schema}
+                              :handler    (fn [request]
+                                            {:status 200
+                                             :body   {:success (
+                                                                (constantly nil)
+                                                                (:toucan-model model)
+                                                                (:id model)
+                                                                (:params request))}})}
+                    :delete  {:summary    (format "Delete one of %s" route-name)
+                              :responses  {:200 {}}
+                              :parameters {}
+                              :handler    (fn [request]
+                                            ;; For gods sake, don't let us delete _everything_ in the database in one go
+                                            (assert (pos? (count (:params request))))
+                                            {:status 200
+                                             :body   (
+                                                      (constantly nil)
+                                                      (:toucan-model model)
+                                                      (-> request :params vec flatten))})}}
+                   ]))))))
