@@ -8,25 +8,21 @@
     [governance.models.shared :as shared]
     [governance.models.shared.query]))
 
-(defmacro construct-models
-  "Constructs all the models, puts them into a map of spec->model"
-  [configs]
-  (println "configs")
-  (println configs)
-  (into {}
-         (mapv (fn [config]
-           (let [config' (eval config)]
-             (println "config:")
-             (println config' (:spec config'))
-             {(:spec config') `(shared/create-model-clj ~config)}))
-         configs)))
+(def configs
+  [governance.models.crisis/config
+   governance.models.tag/config
+   governance.models.user/config])
+(defn construct-models
+  [models]
+  (->> models
+       (map (fn [model] {(:spec model) (shared/create-model model)}))
+       (apply merge)))
 (def models
-  (construct-models [governance.models.crisis/config
-                     governance.models.tag/config
-                     governance.models.user/config
-                     ]))
+  (construct-models configs))
 
 (comment
+  (shared/create-model governance.models.user/config)
+
   (macroexpand-1 '(construct-models [governance.models.crisis/config
                                      governance.models.tag/config
                                      governance.models.user/config

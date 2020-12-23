@@ -24,11 +24,8 @@
                (-> query
                    (sqlh/insert-into table-name)
                    (sql/format)))
-             (:values query)
-             ;(-> query
-             ;    (sqlh/insert-into table-name)
-             ;    (sql/format))
-             )})
+             ;; Return the values we just inserted
+             (:values query))})
 
 (defn wrap-id-inner
   [handler]
@@ -44,8 +41,6 @@
 
 (defn wrap-timestamped
   [handlers _]
-  (println "handlers:")
-  (println handlers)
   (-> handlers
       (update :insert
               (fn [handler]
@@ -86,8 +81,6 @@
 
 (defn build-queries-map
   [{:keys [spec properties] :as ks}]
-  (println "ks:")
-  (println ks)
   (cond-> (default-queries (keyword (name spec)))
 
           (:validate properties)
@@ -98,21 +91,3 @@
 
           (:timestamped? properties)
           (wrap-timestamped nil)))
-
-
-;(add-property! :timestamped?
-;               :insert (fn [obj _]
-;                         (let [now (Timestamp. (System/currentTimeMillis))]
-;                           (assoc obj :created_at now, :updated_at now)))
-;               :update (fn [obj _]
-;                         (assoc obj :updated_at (Timestamp. (System/currentTimeMillis)))))
-;(add-property! :id
-;               :insert (fn [obj _]
-;                         (update obj :id #(or % (str (UUID/randomUUID))))))
-;(add-property! :validate
-;               :insert (fn [obj spec]
-;                         (assert (s/valid? spec obj) (s/explain spec obj))
-;                         obj)
-;               :update (fn [obj spec]
-;                         (assert (s/valid? spec obj) (s/explain spec obj))
-;                         obj))

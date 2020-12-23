@@ -51,6 +51,7 @@
            org.webjars.npm/material-icons                  {:mvn/version "0.3.1"}
            org.webjars/webjars-locator                     {:mvn/version "0.40"}
            org.webjars/webjars-locator-jboss-vfs           {:mvn/version "0.1.0"}
+           prismatic/schema                                {:mvn/version "1.1.12"}
            re-frame/re-frame                               {:mvn/version "1.1.1"}
            reagent/reagent                                 {:mvn/version "0.10.0"}
            ring-oauth2/ring-oauth2                         {:mvn/version "0.1.5"}

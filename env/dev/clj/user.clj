@@ -1,7 +1,7 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
   (:require
-   [governance.config :refer [env]]
+    [governance.config :refer [env]]
     [clojure.pprint]
     [clojure.spec.alpha :as s]
     [expound.alpha :as expound]
@@ -9,7 +9,8 @@
     [governance.core :refer [start-app]]
     [governance.db.core]
     [conman.core :as conman]
-    [luminus-migrations.core :as migrations]))
+    [luminus-migrations.core :as migrations]
+    [schema.core :as sc]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
@@ -61,6 +62,7 @@
   (migrations/create name (select-keys env [:database-url])))
 
 ;; Run at startup
+(sc/set-fn-validation! true)
 (mount/start)
 
 

@@ -1,2 +1,8 @@
 (ns governance.models.shared.query
-  "Empty, unused by clj")
+  "Creates frontend endpoints for use")
+
+(defn build-queries-map
+  [ks]
+  ;; TODO
+  {}
+  )

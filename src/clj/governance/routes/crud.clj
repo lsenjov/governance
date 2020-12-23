@@ -1,10 +1,12 @@
 (ns governance.routes.crud
-  (:require [reitit.coercion.spec]
+  (:require [reitit.coercion.schema]
             [reitit.ring.coercion :as coercion]
             [governance.models :refer [models]]
             [governance.middleware :as middleware]
+            [governance.models.shared.schemas :refer [get-schema]]
             [honeysql.helpers :as sqlh]
             [clojure.spec.alpha :as s]
+            [schema.core :as sc]
             [spec-tools.core :as st]))
 
 (defonce *_t (atom nil))
@@ -13,7 +15,7 @@
   []
   (concat
     ["/crud"
-     {:coercion   reitit.coercion.spec/coercion
+     {:coercion   reitit.coercion.schema/coercion
       :middleware [middleware/wrap-formats
                    coercion/coerce-response-middleware
                    coercion/coerce-request-middleware]
@@ -21,16 +23,16 @@
     (->> models
          vals
          (map (fn [{spec :spec
+                    schema :schema
                     :as  model}]
                 (let [route-name (name spec)]
                   [(str "/" route-name)
                    {:name   spec
+                    :swagger {:tags [(name spec)]}
                     :get    {:summary    (format "GET one or more %s" route-name)
-                             :responses  {200 {:body (s/coll-of spec)}}
-                             :parameters {
-                                          ;; TODO WHY are these getting checked as vectors?
-                                          :params (s/nilable (:query-spec model))
-                                          :query  (s/nilable (:query-spec model))}
+                             :responses  {200 {:body [schema]}}
+                             :parameters {:params (sc/maybe (:query model))
+                                          :query  (sc/maybe (:query model))}
                              ;; TODO move this out
                              :handler    (fn [request]
                                            (reset! *_t request)
@@ -47,8 +49,8 @@
                                                          [:and (map (fn [[k v]] [:= k v])
                                                                     (:params request))])))})}
                     :post   {:summary    (format "Create a %s" route-name)
-                             :responses  {200 {:body (s/coll-of spec)}}
-                             :parameters {:body (s/coll-of spec)}
+                             :responses  {200 {:body (:collection model)}}
+                             :parameters {:body (:collection model)}
                              :handler    (fn [request]
                                            (reset! *_t request)
                                            (reset! *_m model)
@@ -56,8 +58,8 @@
                                             :body   ((-> model :crud :insert)
                                                      {:values (:body-params request)})})}
                     :put    {:summary    (format "Update one of %s" route-name)
-                             :responses  {:200 {:body spec}}
-                             :parameters {:body spec}
+                             :responses  {:200 {:body schema}}
+                             :parameters {:body schema}
                              :handler    (fn [request]
                                            {:status 200
                                             :body   {:success (
@@ -75,4 +77,5 @@
                                             :body   (
                                                      (constantly nil)
                                                      (:toucan-model model)
-                                                     (-> request :params vec flatten))})}}]))))))
+                                                     (-> request :params vec flatten))})}}
+                    ]))))))

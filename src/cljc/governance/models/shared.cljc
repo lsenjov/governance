@@ -5,15 +5,10 @@
             [honeysql.core :as sql]
             [honeysql.helpers :as sqlh]
             [governance.models.generic :as generic]
-            [governance.models.shared.query]))
+            [governance.models.shared.schemas :refer [add-schema! get-schema]]
+            [governance.models.shared.query]
+            [schema.core :as sc]))
 
-(defmacro create-field
-  [field]
-  `(s/def ~(:name field) ~(:spec field)))
-
-(comment
-  (macroexpand-1 '(create-field {:name ::test :spec boolean?}))
-  (create-field {:name ::test :spec boolean?}))
 
 (def model-properties
   "Each property is a function: taking a model and argument and transforming it"
@@ -42,53 +37,42 @@
         (apply comp))
    ;; Apply it to ks
    ks))
-(defmacro create-fields
-  [{:keys [fields]}]
-  (mapv #(list `create-field %) fields))
-(defmacro create-specs
+(defn create-schemas
   [{:keys [fields spec]
     :as   ks}]
-  (let [required-keys (->> fields (filter (comp not false? :required)) (map :name))
-        optional-keys (->> fields (filter (comp false? :required)) (map :name))
-        query-spec-kw (keyword (namespace spec) "query")]
-    `(do
-       ;; Set up specs for each of the individual fields
-       (create-fields ~ks)
-       ;; Now a spec for the object itself
-       (s/def ~spec (s/keys
-                      ~@(when required-keys [:req-un required-keys])
-                      ~@(when optional-keys [:opt-un optional-keys])))
-       ;; Do a spec where everything is optional - useful for queries
-       (s/def ~query-spec-kw (s/keys :opt-un ~(concat required-keys optional-keys)))
-       ;; Do a spec where an array of results is nestled under :value
-       (s/def ~(keyword (namespace spec) "value") (s/coll-of ~spec))
-       (s/def ~(keyword (namespace spec) "get-response") (s/keys :req-un [~(keyword (namespace spec) "value")]))
-       {:spec          ~spec
-        :query-spec    ~query-spec-kw
-        :response-spec ~(keyword (namespace spec) "get-response")})))
-(defmacro create-shared
+  (let [required-fields (->> fields (filter (comp not false? :required)))
+        optional-fields (->> fields (filter (comp false? :required)))
+        query-spec-kw (keyword (namespace spec) "query")
+        coll-spec-kw (keyword (namespace spec) "collection")
+        schema (merge
+                 ;; Required fields, no modification, just adding in
+                 (->> required-fields
+                      (map (fn [field] {(keyword (name (:name field)))
+                                        (get-schema (:spec field))}))
+                      (into {}))
+                 (->> optional-fields
+                      (map (fn [field] {(sc/optional-key (keyword (name (:name field))))
+                                        (get-schema (:spec field))}))
+                      (into {})))
+        ;; Like the schema, but all the fields are optional here
+        query-schema (->> fields
+                          (map (fn [field] {(sc/optional-key (keyword (name (:name field))))
+                                            (get-schema (:spec field))}))
+                          (into {}))]
+    (add-schema! spec schema)
+    (add-schema! coll-spec-kw [schema])
+    (add-schema! query-spec-kw query-schema)
+    {:schema schema
+     :collection [schema]
+     :query query-schema}))
+
+(defn create-model
   [ks]
-  `(merge
-     (create-specs ~ks)))
-(comment
-  (sql/format
-    {:select [:*]
-     :from   [:crises]})
-  (-> (sqlh/select :*)
-      (sqlh/from :crises)
-      (sqlh/select :crises/id)
-      (sql/format)))
-(defmacro create-model-clj
-  [ks]
-  (let [ks' (-> ks
-                eval
-                apply-properties)]
-    `(merge (create-shared ~ks')
-            {:crud (governance.models.shared.query/build-queries-map '~ks')})))
-(defmacro create-model-cljs
-  [ks]
-  (let [ks' (apply-properties (eval ks))]
-    `(merge (create-shared ~ks'))))
+  (merge
+    ks
+    (create-schemas ks)
+    (governance.models.shared.query/build-queries-map ks))
+  )
 
 (comment
   (macroexpand '(create-model-clj {:spec ::something}))

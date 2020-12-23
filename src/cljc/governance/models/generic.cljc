@@ -1,12 +1,16 @@
 (ns governance.models.generic
   (:require [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen])
+            [clojure.spec.gen.alpha :as gen]
+            [governance.models.shared.schemas :refer [add-schema! get-schema]]
+            [schema.core :as sc])
   #?(:clj (:import (java.util UUID))))
 
 (s/def ::string-non-empty
   (s/and string?
          #(pos? (count %))))
+(add-schema! ::string-non-empty (sc/constrained sc/Str #(pos? (count %))))
 (s/def ::id ::string-non-empty)
+(add-schema! ::id ::string-non-empty)
 
 (s/def ::timestamp
   #?(:clj
@@ -22,8 +26,14 @@
        #(= (type %) js/Date)
        #(gen/fmap (fn [l] (new js/Date (+ l 1500000000000)))
                   (gen/large-integer)))))
+(add-schema!
+  ::timestamp
+  #?(:clj java.sql.Timestamp
+     :cljs (sc/pred #(= (type %) js/Date))))
 (s/def ::created_at ::timestamp)
+(add-schema! ::created_at ::timestamp)
 (s/def ::updated_at ::timestamp)
+(add-schema! ::updated_at ::timestamp)
 
 (def id
   ;; Name we're using for the spec - must be qualified
