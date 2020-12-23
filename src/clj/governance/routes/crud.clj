@@ -8,6 +8,7 @@
             [spec-tools.core :as st]))
 
 (defonce *_t (atom nil))
+(defonce *_m (atom nil))
 (defn crud-routes
   []
   (concat
@@ -18,6 +19,7 @@
                    coercion/coerce-request-middleware]
       :swagger    {:info {:title "Crud API"}}}]
     (->> models
+         vals
          (map (fn [{spec :spec
                     :as  model}]
                 (let [route-name (name spec)]
@@ -32,27 +34,27 @@
                              ;; TODO move this out
                              :handler    (fn [request]
                                            (reset! *_t request)
-                                           {:status   200
-                                            :body     ((-> model :crud :select)
-                                                       (cond->
-                                                         {:select [:*]
-                                                          :from   (symbol (name spec))}
+                                           (reset! *_m model)
+                                           {:status 200
+                                            :body   ((-> model :crud :select)
+                                                     (cond->
+                                                       {:select [:*]
+                                                        :from   [(symbol (name spec))]}
 
-                                                         ;; Got parameters? We only check for equality atm
-                                                         (-> request :params count pos?)
-                                                         (sqlh/where
-                                                           [:and (map (fn [[k v]] [:= k v])
-                                                                      (:params request))])))})}
+                                                       ;; Got parameters? We only check for equality atm
+                                                       (-> request :params count pos?)
+                                                       (sqlh/where
+                                                         [:and (map (fn [[k v]] [:= k v])
+                                                                    (:params request))])))})}
                     :post   {:summary    (format "Create a %s" route-name)
-                             :responses  {200 {:body spec}}
-                             :parameters {:body spec}
+                             :responses  {200 {:body (s/coll-of spec)}}
+                             :parameters {:body (s/coll-of spec)}
                              :handler    (fn [request]
                                            (reset! *_t request)
+                                           (reset! *_m model)
                                            {:status 200
-                                            :body   (
-                                                     (constantly nil)
-                                                     (:toucan-model model)
-                                                     (:params request))})}
+                                            :body   ((-> model :crud :insert)
+                                                     {:values (:body-params request)})})}
                     :put    {:summary    (format "Update one of %s" route-name)
                              :responses  {:200 {:body spec}}
                              :parameters {:body spec}

@@ -1,5 +1,6 @@
 (ns governance.models.shared.query
   (:require [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [honeysql.core :as sql]
             [honeysql.helpers :as sqlh]
             [governance.db.core :refer [*db*]]
@@ -13,6 +14,7 @@
   To be wrapped in middleware"
   [table-name]
   {:select (fn [query]
+             (log/debug "default-queries: select: " query)
              (jdbc/query
                {:datasource *db*}
                (sql/format query)))
