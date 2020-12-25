@@ -29,9 +29,29 @@
 (defn create-endpoints
   [model]
   (let [spec (:spec model)
+        schema (get-schema spec)
         endpoint (str "/api/crud/" (name spec))
-        coercer (make-coercer [(get-schema spec)])]
+        coercer (make-coercer [schema])]
     (println "endpoint:" spec endpoint)
+    (let [create-kw (spec->endpoint-kw spec "create")
+          create-success-kw (spec->endpoint-kw spec "create-success")]
+      (rf/reg-event-fx
+        create-kw
+        (s/fn [_ [_ objs] :- [(s/one s/Keyword "k") (s/one [schema] "objs")]]
+          {:http-xhrio {:method          :post
+                        :params          objs
+                        :uri             endpoint
+                        :timeout         3000
+                        :format          (ajax/json-request-format)
+                        :response-format (ajax/json-response-format {:keywords? true})
+                        :on-success      [create-success-kw]
+                        ;; TODO on-failure
+                        }}))
+      (rf/reg-event-fx
+        create-success-kw
+        (s/fn [{:keys [db]} [_ objs]]
+          {:db (update-in db [:crud spec] merge (coll->id-map (coercer objs)))})))
+    ;; Read
     (let [read-kw (spec->endpoint-kw spec "read")
           read-success-kw (spec->endpoint-kw spec "read-success")]
       (rf/reg-event-fx
@@ -51,7 +71,8 @@
           ;; Take the result, add it into the database
           {:db (update-in db [:crud spec] merge (coll->id-map (coercer result)))})))
     {(name spec)
-     {:read (spec->endpoint-kw spec "read")}}))
+     {:create (spec->endpoint-kw spec "create")
+      :read   (spec->endpoint-kw spec "read")}}))
 (comment
   (-> (governance.models/models)
       vals

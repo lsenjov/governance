@@ -3,7 +3,8 @@
     [governance.core :as core]
     [cljs.spec.alpha :as s]
     [expound.alpha :as expound]
-    [devtools.core :as devtools]))
+    [devtools.core :as devtools]
+    [schema.core :as sc]))
 
 (extend-protocol IPrintWithWriter
   js/Symbol
@@ -15,5 +16,7 @@
 (enable-console-print!)
 
 (devtools/install!)
+
+(sc/set-fn-validation! true)
 
 (core/init!)
