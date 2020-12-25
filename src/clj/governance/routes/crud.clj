@@ -72,8 +72,7 @@
                                                :body   {:success ((-> model :crud :update)
                                                                   (->
                                                                     (sqlh/sset (dissoc params :id))
-                                                                    (sqlh/where [:= :id (:id params)])))}
-                                               }))}
+                                                                    (sqlh/where [:= :id (:id params)])))}}))}
                     :delete  {:summary (format "Delete one of %s" route-name)
                               :responses  {:200 {:success [sc/Int]}}
                               :parameters {:query {:id sc/Uuid}}
@@ -83,5 +82,4 @@
                                          {:status 200
                                           :body   {:success
                                                    ((-> model :crud :delete)
-                                                    (sqlh/where [:= :id (-> request :parameters :query :id)]))}})}}
-                   ]))))))
+                                                    (sqlh/where [:= :id (-> request :parameters :query :id)]))}})}}]))))))

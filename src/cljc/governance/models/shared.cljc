@@ -1,5 +1,4 @@
 (ns governance.models.shared
-  #?(:cljs (:require-macros [governance.models.shared :refer [create-field create-model-cljs]]))
   (:require [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]
             [honeysql.core :as sql]
