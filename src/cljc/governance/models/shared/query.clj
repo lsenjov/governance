@@ -27,7 +27,20 @@
                    (sqlh/insert-into table-name)
                    (sql/format)))
              ;; Return the values we just inserted
-             (:values query))})
+             (:values query))
+   :update (fn [query]
+             (println "update:" query)
+             (jdbc/execute!
+               {:datasource *db*}
+               (-> query
+                   (sqlh/update table-name)
+                   (sql/format))))
+   :delete (fn [query]
+             (jdbc/execute!
+               {:datasource *db*}
+               (-> query
+                   (sqlh/delete-from table-name)
+                   (sql/format))))})
 
 (defn wrap-id-inner
   [handler]
@@ -51,17 +64,19 @@
                     (let [now (Timestamp. (System/currentTimeMillis))]
                       (update query :values
                               (fn [values]
-                                (map (fn [row] (assoc row :created_at now, :updated_at now))
+                                (map (fn [row]
+                                       (assoc row :created_at now, :updated_at now))
                                      values))))))))
       (update :update
               (fn [handler]
                 (fn [query]
                   (handler
                     (let [now (Timestamp. (System/currentTimeMillis))]
-                      (update query :values
-                              (fn [values]
-                                (map (fn [row] (assoc row :updated_at now))
-                                     values))))))))))
+                      (update query :set
+                              (fn [value]
+                                (-> value
+                                    (dissoc :created-at)
+                                    (assoc :updated_at now)))))))))))
 
 (defn wrap-validate
   "Wraps insert and update to ensure they're valid going into the database.
@@ -74,12 +89,13 @@
                   (mapv (fn [obj] (sc/validate (get-schema spec) obj))
                         (:values query))
                   (handler query))))
-      (update :update
-              (fn [handler]
-                (fn [query]
-                  (mapv (fn [obj] (sc/validate (get-schema spec) obj))
-                        (:values query))
-                  (handler query))))))
+      ;; TODO validate should take the query schema, not the object schema
+      ;(update :update
+      ;        (fn [handler]
+      ;          (fn [query]
+      ;            (sc/validate (get-schema spec) (:set query))
+      ;            (handler query))))
+      ))
 
 (defn build-queries-map
   [{:keys [spec properties] :as ks}]

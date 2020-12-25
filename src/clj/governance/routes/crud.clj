@@ -17,8 +17,9 @@
     ["/crud"
      {:coercion   reitit.coercion.schema/coercion
       :middleware [middleware/wrap-formats
-                   coercion/coerce-response-middleware
-                   coercion/coerce-request-middleware]
+                   coercion/coerce-exceptions-middleware
+                   coercion/coerce-request-middleware
+                   coercion/coerce-response-middleware]
       :swagger    {:info {:title "Crud API"}}}]
     (->> (models)
          vals
@@ -44,12 +45,12 @@
                                                          :from   [(symbol (name spec))]}
 
                                                         ;; Got parameters? We only check for equality atm
-                                                        (-> request :params count pos?)
+                                                        (-> request :parameters :query count pos?)
                                                         (sqlh/where
                                                           (concat
                                                             [:and]
                                                             (map (fn [[k v]] [:= k v])
-                                                                 (:params request))))))})}
+                                                                 (-> request :parameters :query))))))})}
                     :post    {:summary    (format "Create a %s" route-name)
                               :responses  {200 {:body (:collection model)}}
                               :parameters {:body (:collection model)}
@@ -58,26 +59,29 @@
                                             (reset! *_m model)
                                             {:status 200
                                              :body   ((-> model :crud :insert)
-                                                      {:values (:body-params request)})})}
+                                                      {:values (get-in request [:parameters :body])})})}
                     :put     {:summary    (format "Update one of %s" route-name)
-                              :responses  {:200 {:body schema}}
+                              ;; TODO figure out exactly what we're returning
+                              :responses  {:200 {:body {:success [sc/Int]}}}
                               :parameters {:body schema}
                               :handler    (fn [request]
-                                            {:status 200
-                                             :body   {:success (
-                                                                (constantly nil)
-                                                                (:toucan-model model)
-                                                                (:id model)
-                                                                (:params request))}})}
-                    :delete  {:summary    (format "Delete one of %s" route-name)
-                              :responses  {:200 {}}
-                              :parameters {}
-                              :handler    (fn [request]
-                                            ;; For gods sake, don't let us delete _everything_ in the database in one go
-                                            (assert (pos? (count (:params request))))
-                                            {:status 200
-                                             :body   (
-                                                      (constantly nil)
-                                                      (:toucan-model model)
-                                                      (-> request :params vec flatten))})}}
+                                            (let [params (get-in request [:parameters :body])]
+                                              (reset! *_t request)
+                                              (reset! *_m model)
+                                              {:status 200
+                                               :body   {:success ((-> model :crud :update)
+                                                                  (->
+                                                                    (sqlh/sset (dissoc params :id))
+                                                                    (sqlh/where [:= :id (:id params)])))}
+                                               }))}
+                    :delete  {:summary (format "Delete one of %s" route-name)
+                              :responses  {:200 {:success [sc/Int]}}
+                              :parameters {:query {:id sc/Uuid}}
+                              :handler (fn [request]
+                                         (reset! *_t request)
+                                         (reset! *_m model)
+                                         {:status 200
+                                          :body   {:success
+                                                   ((-> model :crud :delete)
+                                                    (sqlh/where [:= :id (-> request :parameters :query :id)]))}})}}
                    ]))))))
