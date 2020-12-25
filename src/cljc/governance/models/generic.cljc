@@ -28,8 +28,7 @@
                   (gen/large-integer)))))
 (add-schema!
   ::timestamp
-  #?(:clj java.sql.Timestamp
-     :cljs (sc/pred #(= (type %) js/Date))))
+  governance.models.shared.schemas/Timestamp)
 (s/def ::created_at ::timestamp)
 (add-schema! ::created_at ::timestamp)
 (s/def ::updated_at ::timestamp)

@@ -23,7 +23,9 @@
     (ring/router
       [(home-routes)
        (service-routes)
-       (crud-routes)])
+       ["/api"
+        {}
+        (crud-routes)]])
     (ring/routes
       (swagger-ui/create-swagger-ui-handler
         {:path   "/swagger-ui"
