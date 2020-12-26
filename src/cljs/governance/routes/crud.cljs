@@ -8,6 +8,8 @@
             [schema.core :as s]
             [schema.coerce :as sc]))
 
+(defonce *_t (atom nil))
+
 (defn routes
   []
   ["/crud"
@@ -43,7 +45,7 @@
                         :params          objs
                         :uri             endpoint
                         :timeout         3000
-                        :format          (ajax/json-request-format)
+                        :format          (ajax/transit-request-format)
                         :response-format (ajax/json-response-format {:keywords? true})
                         :on-success      [create-success-kw]
                         ;; TODO on-failure
@@ -69,6 +71,8 @@
       (rf/reg-event-fx
         read-success-kw
         (fn [{:keys [db]} [_ result]]
+          (reset! *_t result)
+          (println "objs:" (pr-str result))
           ;; Take the result, add it into the database
           {:db (update-in db [:crud spec] merge (coll->id-map (coercer result)))})))
     ;; Update
@@ -81,11 +85,11 @@
                         :params          obj
                         :uri             endpoint
                         :timeout         3000
-                        ;; TODO UUIDs are not coercing back into strings when going
-                        ;; over the wire!!!
-                        :format          (ajax/json-request-format)
+                        :format          (ajax/transit-request-format)
                         :response-format (ajax/json-response-format {:keywords? true})
-                        :on-success      [update-success-kw obj]}}))
+                        :on-success      [update-success-kw obj]
+                        ;; TODO on-failure
+                        }}))
       (rf/reg-event-fx
         update-success-kw
         ;; If successful, we assume our updates were successful
@@ -94,9 +98,32 @@
                                   (s/one (:query model) "changes")
                                   (s/one s/Any "result")]]
           {:db (update-in db [:crud spec (:id obj)] merge obj)})))
+    ;; Delete
+    (let [delete-kw (spec->endpoint-kw spec "delete")
+          delete-success-kw (spec->endpoint-kw spec "delete-success")]
+      (rf/reg-event-fx
+        delete-kw
+        (s/fn [_ [_ {id :id}] :- [(s/one s/Keyword "k")
+                                  (s/one {:id (get-schema :governance.models.generic/id)} "req")]]
+          {:http-xhrio {:method          :delete
+                        :params          {:id id}
+                        :uri             endpoint
+                        :timeout         3000
+                        :format          (ajax/transit-request-format)
+                        :response-format (ajax/json-response-format {:keywords? true})
+                        :on-success      [delete-success-kw id]}}))
+      (rf/reg-event-fx
+        delete-success-kw
+        (s/fn [{:keys [db]}
+               [_ id _] :- [(s/one s/Keyword "k")
+                            (s/one (get-schema :governance.models.generic/id) "id")
+                            (s/one s/Any "response")]]
+          {:db (update-in db [:crud spec] dissoc id)})))
     {(name spec)
      {:create (spec->endpoint-kw spec "create")
-      :read   (spec->endpoint-kw spec "read")}}))
+      :read   (spec->endpoint-kw spec "read")
+      :update (spec->endpoint-kw spec "update")
+      :delete (spec->endpoint-kw spec "delete")}}))
 (comment
   (-> (governance.models/models)
       vals

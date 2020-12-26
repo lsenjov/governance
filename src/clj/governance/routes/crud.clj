@@ -75,7 +75,7 @@
                                                                     (sqlh/where [:= :id (:id params)])))}}))}
                     :delete  {:summary (format "Delete one of %s" route-name)
                               :responses  {:200 {:success [sc/Int]}}
-                              :parameters {:query {:id sc/Uuid}}
+                              :parameters {:body {:id sc/Uuid}}
                               :handler (fn [request]
                                          (reset! *_t request)
                                          (reset! *_m model)
