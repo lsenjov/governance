@@ -33,6 +33,7 @@
         endpoint (str "/api/crud/" (name spec))
         coercer (make-coercer [schema])]
     (println "endpoint:" spec endpoint)
+    ;; Create
     (let [create-kw (spec->endpoint-kw spec "create")
           create-success-kw (spec->endpoint-kw spec "create-success")]
       (rf/reg-event-fx
@@ -70,6 +71,29 @@
         (fn [{:keys [db]} [_ result]]
           ;; Take the result, add it into the database
           {:db (update-in db [:crud spec] merge (coll->id-map (coercer result)))})))
+    ;; Update
+    (let [update-kw (spec->endpoint-kw spec "update")
+          update-success-kw (spec->endpoint-kw spec "update-success")]
+      (rf/reg-event-fx
+        update-kw
+        (s/fn [_ [_ obj]]
+          {:http-xhrio {:method          :put
+                        :params          obj
+                        :uri             endpoint
+                        :timeout         3000
+                        ;; TODO UUIDs are not coercing back into strings when going
+                        ;; over the wire!!!
+                        :format          (ajax/json-request-format)
+                        :response-format (ajax/json-response-format {:keywords? true})
+                        :on-success      [update-success-kw obj]}}))
+      (rf/reg-event-fx
+        update-success-kw
+        ;; If successful, we assume our updates were successful
+        (s/fn [{:keys [db]}
+               [_ obj result] :- [(s/one s/Keyword "k")
+                                  (s/one (:query model) "changes")
+                                  (s/one s/Any "result")]]
+          {:db (update-in db [:crud spec (:id obj)] merge obj)})))
     {(name spec)
      {:create (spec->endpoint-kw spec "create")
       :read   (spec->endpoint-kw spec "read")}}))

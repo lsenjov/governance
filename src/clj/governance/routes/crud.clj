@@ -63,7 +63,7 @@
                     :put     {:summary    (format "Update one of %s" route-name)
                               ;; TODO figure out exactly what we're returning
                               :responses  {:200 {:body {:success [sc/Int]}}}
-                              :parameters {:body schema}
+                              :parameters {:body (:query model)}
                               :handler    (fn [request]
                                             (let [params (get-in request [:parameters :body])]
                                               (reset! *_t request)

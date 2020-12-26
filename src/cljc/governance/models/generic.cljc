@@ -10,7 +10,7 @@
          #(pos? (count %))))
 (add-schema! ::string-non-empty (sc/constrained sc/Str #(pos? (count %))))
 (s/def ::id ::string-non-empty)
-(add-schema! ::id sc/Uuid)
+(add-schema! ::id #?(:clj sc/Uuid :cljs ::string-non-empty))
 
 (s/def ::timestamp
   #?(:clj
