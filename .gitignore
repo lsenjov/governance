@@ -15,6 +15,7 @@ profiles.clj
 /.shadow-cljs
 /node_modules
 /log
+/resources/public/css/*
 
 # Persists postgres dev server
 /pg_persist

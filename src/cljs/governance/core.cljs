@@ -8,6 +8,8 @@
     [goog.history.EventType :as HistoryEventType]
     [markdown.core :refer [md->html]]
     [governance.ajax :as ajax]
+    ;; TODO replace with gov.components library instead of using raws
+    [governance.components.raw :as raw]
     [governance.events]
     [reitit.core :as reitit]
     [reitit.frontend.easy :as rfe]
@@ -16,35 +18,44 @@
   (:import goog.History))
 
 (defn nav-link [uri title page]
-  [:a.navbar-item
-   {:href   uri
-    :class (when (= page @(rf/subscribe [:common/page])) :is-active)}
+  [raw/AnchorButton
+   {:href  uri
+    :class ["bp3-minimal"
+            (when (= page @(rf/subscribe [:common/page])) :is-active)]}
    title])
 
-(defn navbar [] 
-  (r/with-let [expanded? (r/atom false)]
-              [:nav.navbar.is-info>div.container
-               [:div.navbar-brand
-                [:a.navbar-item {:href "/" :style {:font-weight :bold}} "governance"]
-                [:span.navbar-burger.burger
-                 {:data-target :nav-menu
-                  :on-click #(swap! expanded? not)
-                  :class (when @expanded? :is-active)}
-                 [:span][:span][:span]]]
-               [:div#nav-menu.navbar-menu
-                {:class (when @expanded? :is-active)}
-                [:div.navbar-start
-                 [nav-link "#/" "Home" :home]
-                 [nav-link "#/about" "About" :about]]]]))
+(defn navbar []
+  [raw/Navbar
+   [raw/NavbarGroup
+    [raw/NavbarHeading
+     [:a {:href "/" :style {:font-weight :bold}} "governance"]]]
+   [raw/NavbarGroup
+    [nav-link "/" "Home" :home]
+    [nav-link "/about" "About" :about]]])
 
 (defn about-page []
   [:section.section>div.container>div.content
    [:img {:src "/img/warning_clojure.png"}]])
 
+;(defn home-page []
+;  [:section.section>div.container>div.content
+;   (when-let [docs @(rf/subscribe [:docs])]
+;     [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
+
+(def *temp-val (r/atom nil))
 (defn home-page []
   [:section.section>div.container>div.content
-   (when-let [docs @(rf/subscribe [:docs])]
-     [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
+   ;[raw/H5 "asdf"]
+   ;[raw/Button {:on-click #(js/alert 1)} "Asdf"]
+   [raw/InputGroup {:value "@*temp-val"
+                    :on-change #(reset! *temp-val (oops.core/oget % "target.value"))
+                    :async-control true}]
+   [raw/Text {} (pr-str @*temp-val)]
+   [raw/DateRangePicker {:single-month-only      true
+                         :allow-single-day-range true
+                         :on-change              #(this-as this
+                                                    (js/console.log this)
+                                                    (js/console.log %))}]])
 
 (defn page []
   (if-let [page @(rf/subscribe [:common/page])]
@@ -67,7 +78,7 @@
   (rfe/start!
     router
     navigate!
-    {}))
+    {:use-fragment false}))
 
 ;; -------------------------
 ;; Initialize app

@@ -128,7 +128,14 @@
   (-> (governance.models/models)
       vals
       first))
-(defn utils
+(s/defn utils
+  :- {s/Str {:create s/Keyword
+             :read   s/Keyword
+             :update s/Keyword
+             :delete s/Keyword}}
+  "Returns a listing of tables, with associated CRUD keywords for re-frame"
   []
-  (-> (governance.models/models)
-      vals))
+  (->> (governance.models/models)
+       vals
+       (map create-endpoints)
+       (into {})))
