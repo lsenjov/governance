@@ -3,6 +3,8 @@
     [clojure.spec.alpha :as s]
     [governance.config :refer [env]]
     [governance.models.crisis]
+    [governance.models.departments]
+    [governance.models.missions]
     [governance.models.tag]
     [governance.models.user]
 
@@ -11,6 +13,8 @@
 
 (def configs
   [governance.models.crisis/config
+   governance.models.departments/config
+   governance.models.missions/config
    governance.models.tag/config
    governance.models.user/config])
 (defn construct-models
